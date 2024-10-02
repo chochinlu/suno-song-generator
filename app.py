@@ -82,18 +82,20 @@ def analyze_song(lyrics):
 
     return song_style, instruments
 
-def generate_title(title, lyrics, style, language):
+def generate_title(title, lyrics, style, language, thought):
     prompt = f"""
-    Based on the following information, generate a catchy and appropriate song title:
+    Based on the following information, generate a catchy and appropriate song title that must be closely related to the songwriter's thought:
     
     Current title (if any): {title}
     Lyrics excerpt: {lyrics[:200]}...
     Song style: {style}
     Language: {language}
+    Songwriter's thought: {thought}
     
     Please provide only the generated title in the specified language, without any additional explanation.
     If the language is Chinese, use Traditional Chinese characters.
     Do not include any quotation marks or parentheses at the beginning or end of the title.
+    The generated title must clearly reflect the songwriter's thought, ensuring a strong connection between the two.
     """
     
     response = client.chat.completions.create(
@@ -102,7 +104,8 @@ def generate_title(title, lyrics, style, language):
             {"role": "system", "content": "You are a creative songwriter specializing in crafting catchy song titles in multiple languages."},
             {"role": "user", "content": prompt}
         ],
-        max_tokens=30
+        max_tokens=30,
+        temperature=0.5
     )
     
     generated_title = response.choices[0].message.content.strip()
@@ -131,6 +134,11 @@ def generate_lyrics(instruments, language, thought):
     Instruments and arrangement: {instruments}
     Language: {language}
     Songwriter's thought: {thought}
+    
+    Requirements:
+    1. The lyrics should rhyme as much as possible, focusing on creating a melodic and rhythmic flow.
+    2. Ensure the rhyme scheme is appropriate for the song style and language.
+    3. Use internal rhymes and assonance to enhance the lyrical quality when applicable.
     
     Please provide only the generated lyrics in the specified language, without any additional explanation.
     If the language is Chinese, use Traditional Chinese characters.
@@ -166,6 +174,8 @@ with gr.Blocks() as demo:
     
     with gr.Row():
         with gr.Column():
+            your_thought_input = gr.Textbox(label="Enter your thought here:", lines=5, placeholder="You can paste or edit your thought about the song here...")
+
             title_input = gr.Textbox(label="Enter or edit song title here:", placeholder="You can paste or edit song title here...")
             generate_title_btn = gr.Button("Generate Song Title")
             
@@ -175,7 +185,7 @@ with gr.Blocks() as demo:
                 outputs=title_input
             )
             
-            style_input = gr.Textbox(label="Enter or edit song style here:", placeholder="You can generate or edit song style here...")
+            style_input = gr.Textbox(label="Enter or edit song style:", placeholder="You can generate or edit song style here...", interactive=True)
             generate_style_btn = gr.Button("Generate Song Style")
             
             generate_style_btn.click(
@@ -184,9 +194,8 @@ with gr.Blocks() as demo:
                 outputs=style_input
             )
             
-            your_thought_input = gr.Textbox(label="Enter your thought here:", lines=5, placeholder="You can paste or edit your thought about the song here...")
         with gr.Column():
-            lyrics_input = gr.Textbox(label="Enter or edit lyrics here:", lines=18, placeholder="You can paste or edit lyrics here...")
+            lyrics_input = gr.Textbox(label="Enter or edit lyrics here:", lines=10, placeholder="You can paste or edit lyrics here...",interactive=True)
             generate_lyrics_btn = gr.Button("Generate Song Lyric")
             
             generate_lyrics_btn.click(
