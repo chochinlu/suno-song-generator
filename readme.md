@@ -26,6 +26,13 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+Create `.env` file and add the following environment variables:
+
+```bash
+OPENAI_API_KEY=<your_openai_api_key>
+```
+
+
 You need to start the Suno API server, please refer to the [Suno API](https://github.com/gcui-art/suno-api)
 
 Start the Song Generator:
