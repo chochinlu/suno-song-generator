@@ -62,21 +62,14 @@ with gr.Blocks() as demo:
         with gr.Column():
             title_input = gr.Textbox(label="Enter or edit song title here...")
             generate_title_btn = gr.Button("Generate Song Title")
+            
+            style_input = gr.Textbox(label="Enter or edit song style here...")
+            generate_style_btn = gr.Button("Generate Song Style")
         with gr.Column():
             lyrics_input = gr.Textbox(label="Enter or edit lyrics here...", lines=5)
             generate_lyrics_btn = gr.Button("Generate Song Lyric")
     
-    style_input = gr.Textbox(label="Enter or edit song style here...")
-    generate_style_btn = gr.Button("Generate Song Style")
-    
     generate_song_btn = gr.Button("Generate the Song at Suno")
-    song_output = gr.Textbox(label="Processing... / Your song is ready: [Link to generated song]")
-
-    get_lyrics_btn.click(get_lyrics, inputs=youtube_link, outputs=lyrics_output)
-    analyze_btn.click(analyze_song, inputs=lyrics_output, outputs=[song_style, instruments])
-    generate_title_btn.click(generate_song_component, inputs=[gr.Textbox(value="title"), title_input], outputs=title_input)
-    generate_lyrics_btn.click(generate_song_component, inputs=[gr.Textbox(value="lyrics"), lyrics_input], outputs=lyrics_input)
-    generate_style_btn.click(generate_song_component, inputs=[gr.Textbox(value="style"), style_input], outputs=style_input)
-    generate_song_btn.click(generate_song, outputs=song_output)
+    song_output = gr.Markdown("Processing... / Your song is ready: [Link to generated song]")
 
 demo.launch()
