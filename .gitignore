@@ -1,5 +1,6 @@
 *.mp3
 *.mp4
-*.txt
 __pycache__
 .env
+*.txt
+!requirements.txt
