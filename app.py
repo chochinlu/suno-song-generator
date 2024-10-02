@@ -121,6 +121,33 @@ def generate_song():
     # Currently returns placeholder text
     return "Processing... / Your song is ready: [Link to generated song]"
 
+def update_style_input(song_style):
+    return song_style
+
+def generate_lyrics(instruments, language, thought):
+    prompt = f"""
+    Based on the following information, generate song lyrics:
+    
+    Instruments and arrangement: {instruments}
+    Language: {language}
+    Songwriter's thought: {thought}
+    
+    Please provide only the generated lyrics in the specified language, without any additional explanation.
+    If the language is Chinese, use Traditional Chinese characters.
+    """
+    
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You are a talented songwriter capable of creating lyrics in multiple languages."},
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=500
+    )
+    
+    generated_lyrics = response.choices[0].message.content.strip()
+    return generated_lyrics
+
 with gr.Blocks() as demo:
     youtube_link = gr.Text(label="Enter YouTube Song Link:")
     get_lyrics_btn = gr.Button("Get Lyrics")
@@ -139,7 +166,7 @@ with gr.Blocks() as demo:
     
     with gr.Row():
         with gr.Column():
-            title_input = gr.Textbox(label="Enter or edit song title here...")
+            title_input = gr.Textbox(label="Enter or edit song title here:", placeholder="You can paste or edit song title here...")
             generate_title_btn = gr.Button("Generate Song Title")
             
             generate_title_btn.click(
@@ -148,11 +175,25 @@ with gr.Blocks() as demo:
                 outputs=title_input
             )
             
-            style_input = gr.Textbox(label="Enter or edit song style here...")
+            style_input = gr.Textbox(label="Enter or edit song style here:", placeholder="You can generate or edit song style here...")
             generate_style_btn = gr.Button("Generate Song Style")
+            
+            generate_style_btn.click(
+                fn=update_style_input,
+                inputs=song_style,
+                outputs=style_input
+            )
+            
+            your_thought_input = gr.Textbox(label="Enter your thought here:", lines=5, placeholder="You can paste or edit your thought about the song here...")
         with gr.Column():
-            lyrics_input = gr.Textbox(label="Enter or edit lyrics here...", lines=5)
+            lyrics_input = gr.Textbox(label="Enter or edit lyrics here:", lines=18, placeholder="You can paste or edit lyrics here...")
             generate_lyrics_btn = gr.Button("Generate Song Lyric")
+            
+            generate_lyrics_btn.click(
+                fn=generate_lyrics,
+                inputs=[instruments, language_select, your_thought_input],
+                outputs=lyrics_input
+            )
     
     generate_song_btn = gr.Button("Generate the Song at Suno")
     song_output = gr.Markdown("Processing... / Your song is ready: [Link to generated song]")
