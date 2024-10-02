@@ -5,6 +5,7 @@ import whisper
 import os
 from openai import OpenAI
 import json
+import requests
 
 client = OpenAI()
 
@@ -119,10 +120,24 @@ def generate_song_component(component_type, input_text):
     # Currently returns input text
     return f"Generated {component_type}: {input_text}"
 
-def generate_song():
-    # Implement full song generation logic here
-    # Currently returns placeholder text
-    return "Processing... / Your song is ready: [Link to generated song]"
+def generate_song(generated_lyrics, style_input, title_input):
+    url = "http://localhost:3000/api/custom_generate"
+    payload = {
+        "prompt": generated_lyrics,
+        "title": title_input,
+        "tags": style_input,
+        "make_instrumental": False,
+        "wait_audio": True
+    }
+    
+    try:
+        response = requests.post(url, json=payload)
+        response.raise_for_status()
+        result = response.json()
+        return f"{result}"
+    except requests.RequestException as e:
+        print(e)
+        return f"Error generating song: {str(e)}"
 
 def update_style_input(song_style):
     return song_style
@@ -181,7 +196,7 @@ with gr.Blocks() as demo:
             
             generate_title_btn.click(
                 fn=generate_title,
-                inputs=[title_input, lyrics_output, song_style, language_select],
+                inputs=[title_input, lyrics_output, song_style, language_select, your_thought_input],
                 outputs=title_input
             )
             
@@ -205,6 +220,12 @@ with gr.Blocks() as demo:
             )
     
     generate_song_btn = gr.Button("Generate the Song at Suno")
-    song_output = gr.Markdown("Processing... / Your song is ready: [Link to generated song]")
+    song_output = gr.Text(label="Generated Song Result")
+
+    generate_song_btn.click(
+        fn=generate_song,
+        inputs=[lyrics_input, style_input, title_input],
+        outputs=song_output
+    )
 
 demo.launch()
