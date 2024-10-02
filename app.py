@@ -82,6 +82,35 @@ def analyze_song(lyrics):
 
     return song_style, instruments
 
+def generate_title(title, lyrics, style, language):
+    prompt = f"""
+    Based on the following information, generate a catchy and appropriate song title:
+    
+    Current title (if any): {title}
+    Lyrics excerpt: {lyrics[:200]}...
+    Song style: {style}
+    Language: {language}
+    
+    Please provide only the generated title in the specified language, without any additional explanation.
+    If the language is Chinese, use Traditional Chinese characters.
+    Do not include any quotation marks or parentheses at the beginning or end of the title.
+    """
+    
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You are a creative songwriter specializing in crafting catchy song titles in multiple languages."},
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=30
+    )
+    
+    generated_title = response.choices[0].message.content.strip()
+    # Remove possible quotation marks and parentheses at the beginning or end of the title
+    generated_title = generated_title.strip('"\'()[]{}')
+    
+    return generated_title
+
 def generate_song_component(component_type, input_text):
     # Implement song component generation logic here
     # Currently returns input text
@@ -112,6 +141,12 @@ with gr.Blocks() as demo:
         with gr.Column():
             title_input = gr.Textbox(label="Enter or edit song title here...")
             generate_title_btn = gr.Button("Generate Song Title")
+            
+            generate_title_btn.click(
+                fn=generate_title,
+                inputs=[title_input, lyrics_output, song_style, language_select],
+                outputs=title_input
+            )
             
             style_input = gr.Textbox(label="Enter or edit song style here...")
             generate_style_btn = gr.Button("Generate Song Style")
