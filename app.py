@@ -1,14 +1,16 @@
 import gradio as gr
-from pytube import YouTube
+from pytubefix import YouTube
+from pytubefix.cli import on_progress
 import whisper
 import os
 
 def get_lyrics(youtube_link):
     try:
         # Download YouTube audio
-        yt = YouTube(youtube_link)
-        audio = yt.streams.filter(only_audio=True).first()
-        audio.download(filename="temp.mp3")
+        yt = YouTube(youtube_link, on_progress_callback=on_progress)
+        print(f"Processing YouTube link: {youtube_link}")
+        audio = yt.streams.get_audio_only()
+        audio.download(filename="temp", mp3=True)
 
         # Transcribe audio using Whisper
         model = whisper.load_model("turbo")
@@ -47,9 +49,11 @@ def generate_song():
     return "Processing... / Your song is ready: [Link to generated song]"
 
 with gr.Blocks() as demo:
-    youtube_link = gr.Textbox(label="Enter YouTube Song Link")
+    youtube_link = gr.Text(label="Enter YouTube Song Link:")
     get_lyrics_btn = gr.Button("Get Lyrics")
-    lyrics_output = gr.Textbox(label="Lyrics will be displayed here...")
+    lyrics_output = gr.Textbox(label="Lyrics:", lines=10, interactive=True, placeholder="You can paste or edit lyrics here...")
+    
+    get_lyrics_btn.click(fn=get_lyrics, inputs=youtube_link, outputs=lyrics_output)
     
     analyze_btn = gr.Button("Analysis")
     with gr.Row():
