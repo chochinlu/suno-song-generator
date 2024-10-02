@@ -26,7 +26,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-You need to start the Suno API server, please refer to the [Suno API](https://github.com/suno-ai/suno-public/tree/main/docs/api)
+You need to start the Suno API server, please refer to the [Suno API](https://github.com/gcui-art/suno-api)
 
 Start the Song Generator:
 
