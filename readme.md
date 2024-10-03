@@ -49,13 +49,6 @@ The app has added the langfuse observer decorator to the functions that interact
 
 You can use the self-hosted LangFuse to observe the tracing data. Flow [this repository](https://github.com/gcui-art/langfuse-langsmith-self-hosted) and run `docker compose up -d` to start the LangFuse server.
 
-Fllow the instruction in the langfuse server, sign up for an account, create a new project, and get the `LANGFUSE_SECRET_KEY` and `LANGFUSE_PUBLIC_KEY`, add them to the `.env` file: 
-
-```env
-LANGFUSE_SECRET_KEY=<your_langfuse_secret_key>
-LANGFUSE_PUBLIC_KEY=<your_langfuse_public_key>
-LANGFUSE_HOST="http://localhost:3000"
-```
 
 Then, you can view the tracing data at http://localhost:3000/
 
@@ -66,6 +59,14 @@ Create `.env` file and add the following environment variables:
 ```bash
 OPENAI_API_KEY=<your_openai_api_key>
 SUNO_API_HOST=<your_suno_api_host>
+```
+
+Fllow the instruction in the langfuse server, sign up for an account, create a new project, and get the `LANGFUSE_SECRET_KEY` and `LANGFUSE_PUBLIC_KEY`, add them to the `.env` file: 
+
+```env
+LANGFUSE_SECRET_KEY=<your_langfuse_secret_key>
+LANGFUSE_PUBLIC_KEY=<your_langfuse_public_key>
+LANGFUSE_HOST="http://localhost:3000"
 ```
 
 Create virtual environment (recommend) and install dependencies:
