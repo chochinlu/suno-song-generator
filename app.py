@@ -122,14 +122,9 @@ def generate_title(title, lyrics, style, language, thought):
     
     return generated_title
 
-def generate_song_component(component_type, input_text):
-    # Implement song component generation logic here
-    # Currently returns input text
-    return f"Generated {component_type}: {input_text}"
-
 @observe()
 def generate_song(generated_lyrics, style_input, title_input):
-    url = "http://localhost:3000/api/custom_generate"
+    url = f"{os.getenv('SUNO_API_HOST')}/api/custom_generate"
     payload = {
         "prompt": generated_lyrics,
         "title": title_input,
@@ -142,10 +137,18 @@ def generate_song(generated_lyrics, style_input, title_input):
         response = requests.post(url, json=payload)
         response.raise_for_status()
         result = response.json()
-        return f"{result}"
+        
+        outputs = []
+        for song in result[:2]:
+            outputs.extend([song['image_url'], song['audio_url']])
+        
+        while len(outputs) < 4:
+            outputs.extend([None, None])
+        
+        return *outputs, gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=True)
     except requests.RequestException as e:
-        print(e)
-        return f"Error generating song: {str(e)}"
+        error_message = f"Error generating song: {str(e)}"
+        return None, None, None, None, gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)
 
 @observe()
 def update_style_input(song_style):
@@ -230,12 +233,25 @@ with gr.Blocks() as demo:
             )
     
     generate_song_btn = gr.Button("Generate the Song at Suno")
-    song_output = gr.Text(label="Generated Song Result")
+    
+    with gr.Row():
+        with gr.Column():
+            image_output1 = gr.Image(label="Song 1 Image", visible=False)
+            audio_output1 = gr.Audio(label="Song 1 Audio", visible=False)
+        
+        with gr.Column():
+            image_output2 = gr.Image(label="Song 2 Image", visible=False)
+            audio_output2 = gr.Audio(label="Song 2 Audio", visible=False)
 
     generate_song_btn.click(
         fn=generate_song,
         inputs=[lyrics_input, style_input, title_input],
-        outputs=song_output
+        outputs=[
+            image_output1, audio_output1,
+            image_output2, audio_output2,
+            image_output1, audio_output1,
+            image_output2, audio_output2
+        ]
     )
 
 demo.launch()
