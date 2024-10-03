@@ -17,8 +17,8 @@ client = OpenAI()
 @observe()
 def get_lyrics(youtube_link):
     try:
-        # Download YouTube audio
-        yt = YouTube(youtube_link, on_progress_callback=on_progress)
+        # Download YouTube audio with true= po to  avoid bot detection
+        yt = YouTube(youtube_link, use_po_token=True, on_progress_callback=on_progress)
         print(f"Processing YouTube link: {youtube_link}")
         audio = yt.streams.get_audio_only()
         audio.download(filename="temp", mp3=True)
