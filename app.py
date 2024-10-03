@@ -9,6 +9,7 @@ from langfuse.openai import OpenAI
 from langfuse.decorators import observe
 import json
 import requests
+from prompts import LYRICS_ANALYSIS_PROMPT, TITLE_GENERATION_PROMPT, LYRICS_GENERATION_PROMPT
 
 load_dotenv()
 client = OpenAI()
@@ -43,32 +44,10 @@ def get_lyrics(youtube_link):
 
 @observe()
 def analyze_song(lyrics):
-    system_prompt = """
-    You are a lyrics analysis expert. After analyzing the lyrics, provide:
-    - Song style: Use fewer than 100 characters to analyze the possible style of the song, using brief words as separators.
-    - Song structure analysis: Analyze the composition of the song's sections, including possible vocal styles and the combination of one to three instruments.
-
-    Example output:
-    - Song style: Rock/Pop; Empowering; Emotional; Introspective; Dynamic
-
-    - Song structure analysis: 
-      - Intro: Instrumental buildup, setting an emotional tone, possibly with guitar and keyboard.
-      - Verse: Reflective vocal style, emphasizing struggle and determination, accompanied by guitar and light percussion.
-      - Chorus: Powerful delivery, showcasing strong vocals, energetic instrumentation with drums and electric guitar, uplifting message.
-      - Bridge: Shift to a softer, contemplative vocal style, using strings or piano to enhance emotion.
-      - Outro: Repetition of key themes from the chorus, leading to a climactic finish with full instrumental support.
-
-    Please provide the analysis in the following JSON format:
-    {
-        "songStyle": "Brief description of song style",
-        "instruments": "Detailed analysis of song structure and instruments"
-    }
-    """
-
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": system_prompt},
+            {"role": "system", "content": LYRICS_ANALYSIS_PROMPT},
             {"role": "user", "content": f"Analyze these lyrics:\n\n{lyrics}"}
         ],
         max_tokens=500
@@ -91,20 +70,14 @@ def analyze_song(lyrics):
 
 @observe()
 def generate_title(title, lyrics, style, language, thought):
-    prompt = f"""
-    Based on the following information, generate a catchy and appropriate song title that must be closely related to the songwriter's thought:
-    
-    Current title (if any): {title}
-    Lyrics excerpt: {lyrics[:200]}...
-    Song style: {style}
-    Language: {language}
-    Songwriter's thought: {thought}
-    
-    Please provide only the generated title in the specified language, without any additional explanation.
-    If the language is Chinese, use Traditional Chinese characters.
-    Do not include any quotation marks or parentheses at the beginning or end of the title.
-    The generated title must clearly reflect the songwriter's thought, ensuring a strong connection between the two.
-    """
+    print(title, lyrics, style, language, thought)
+    prompt = TITLE_GENERATION_PROMPT.format(
+        title=title,
+        lyrics=lyrics,
+        style=style,
+        language=language,
+        thought=thought
+    )
     
     response = client.chat.completions.create(
         model="gpt-4o-mini",
@@ -156,21 +129,11 @@ def update_style_input(song_style):
 
 @observe()
 def generate_lyrics(instruments, language, thought):
-    prompt = f"""
-    Based on the following information, generate song lyrics:
-    
-    Instruments and arrangement: {instruments}
-    Language: {language}
-    Songwriter's thought: {thought}
-    
-    Requirements:
-    1. The lyrics should rhyme as much as possible, focusing on creating a melodic and rhythmic flow.
-    2. Ensure the rhyme scheme is appropriate for the song style and language.
-    3. Use internal rhymes and assonance to enhance the lyrical quality when applicable.
-    
-    Please provide only the generated lyrics in the specified language, without any additional explanation.
-    If the language is Chinese, use Traditional Chinese characters.
-    """
+    prompt = LYRICS_GENERATION_PROMPT.format(
+        instruments=instruments,
+        language=language,
+        thought=thought
+    )
     
     response = client.chat.completions.create(
         model="gpt-4o-mini",
