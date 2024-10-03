@@ -70,7 +70,7 @@ def analyze_song(lyrics):
 
 @observe()
 def generate_title(title, lyrics, style, language, thought):
-    print(title, lyrics, style, language, thought)
+    # print(title, lyrics, style, language, thought)
     prompt = TITLE_GENERATION_PROMPT.format(
         title=title,
         lyrics=lyrics,
@@ -118,10 +118,10 @@ def generate_song(generated_lyrics, style_input, title_input):
         while len(outputs) < 4:
             outputs.extend([None, None])
         
-        return *outputs, gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=True)
+        return *outputs, gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=False)
     except requests.RequestException as e:
         error_message = f"Error generating song: {str(e)}"
-        return None, None, None, None, gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)
+        return None, None, None, None, gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=True, value=error_message)
 
 @observe()
 def update_style_input(song_style):
@@ -197,7 +197,7 @@ with gr.Blocks() as demo:
     
     generate_song_btn = gr.Button("Generate the Song at Suno")
     
-    with gr.Row():
+    with gr.Row() as output_row:
         with gr.Column():
             image_output1 = gr.Image(label="Song 1 Image", visible=False)
             audio_output1 = gr.Audio(label="Song 1 Audio", visible=False)
@@ -206,15 +206,35 @@ with gr.Blocks() as demo:
             image_output2 = gr.Image(label="Song 2 Image", visible=False)
             audio_output2 = gr.Audio(label="Song 2 Audio", visible=False)
 
+    processing_msg = gr.Markdown(visible=False)
+    
+    def show_processing_msg():
+        return gr.update(visible=True, value="Processing...")
+
+    def hide_processing_msg():
+        return gr.update(visible=False)
+
     generate_song_btn.click(
+        fn=show_processing_msg,
+        outputs=processing_msg
+    ).then(
         fn=generate_song,
         inputs=[lyrics_input, style_input, title_input],
         outputs=[
             image_output1, audio_output1,
             image_output2, audio_output2,
             image_output1, audio_output1,
-            image_output2, audio_output2
+            image_output2, audio_output2,
+            processing_msg
         ]
     )
+
+    suno_link = gr.HTML('''
+    <p style="text-align: center; font-size: 28px; margin-top: 20px;">
+        <a href="https://www.suno.com" target="_blank" style="color: #4a90e2; text-decoration: none; font-weight: bold;">
+            Visit Suno Website
+        </a>
+    </p>
+''')
 
 demo.launch()
