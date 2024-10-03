@@ -1,14 +1,19 @@
+from dotenv import load_dotenv
 import gradio as gr
 from pytubefix import YouTube
 from pytubefix.cli import on_progress
 import whisper
 import os
-from openai import OpenAI
+# from openai import OpenAI
+from langfuse.openai import OpenAI
+from langfuse.decorators import observe
 import json
 import requests
 
+load_dotenv()
 client = OpenAI()
 
+@observe()
 def get_lyrics(youtube_link):
     try:
         # Download YouTube audio
@@ -36,6 +41,7 @@ def get_lyrics(youtube_link):
     except Exception as e:
         return f"An error occurred: {str(e)}"
 
+@observe()
 def analyze_song(lyrics):
     system_prompt = """
     You are a lyrics analysis expert. After analyzing the lyrics, provide:
@@ -83,6 +89,7 @@ def analyze_song(lyrics):
 
     return song_style, instruments
 
+@observe()
 def generate_title(title, lyrics, style, language, thought):
     prompt = f"""
     Based on the following information, generate a catchy and appropriate song title that must be closely related to the songwriter's thought:
@@ -120,6 +127,7 @@ def generate_song_component(component_type, input_text):
     # Currently returns input text
     return f"Generated {component_type}: {input_text}"
 
+@observe()
 def generate_song(generated_lyrics, style_input, title_input):
     url = "http://localhost:3000/api/custom_generate"
     payload = {
@@ -139,9 +147,11 @@ def generate_song(generated_lyrics, style_input, title_input):
         print(e)
         return f"Error generating song: {str(e)}"
 
+@observe()
 def update_style_input(song_style):
     return song_style
 
+@observe()
 def generate_lyrics(instruments, language, thought):
     prompt = f"""
     Based on the following information, generate song lyrics:
