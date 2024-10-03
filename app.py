@@ -147,6 +147,43 @@ def generate_lyrics(instruments, language, thought):
     generated_lyrics = response.choices[0].message.content.strip()
     return generated_lyrics
 
+##document upload.
+@observe()
+def upload_document(document):
+    try:
+        if document is not None:
+            with open("uploaded_document.txt", "w", encoding="utf-8") as f:
+                f.write(document.name.read().decode("utf-8"))
+            return "Document uploaded successfully."
+        return "No document uploaded."
+    except Exception as e:
+        return f"An error occurred while uploading the document: {str(e)}"
+
+@observe()
+def generate_specific_lyrics(instruments, language, thought, document_path="uploaded_document.txt"):
+    try:
+        # Load the uploaded document
+        with open(document_path, "r", encoding="utf-8") as f:
+            document_content = f.read()
+
+        # Combine document content with user inputs to form the prompt
+        prompt = f"{document_content}\n\n{LYRICS_GENERATION_PROMPT.format(instruments=instruments, language=language, thought=thought)}"
+
+        # Generate lyrics using the OpenAI client with the enhanced prompt
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a talented songwriter capable of creating lyrics in multiple languages based on the provided documents."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=500
+        )
+
+        generated_lyrics = response.choices[0].message.content.strip()
+        return generated_lyrics
+    except Exception as e:
+        return f"An error occurred while generating lyrics: {str(e)}"
+
 with gr.Blocks() as demo:
     youtube_link = gr.Text(label="Enter YouTube Song Link:")
     get_lyrics_btn = gr.Button("Get Lyrics")
@@ -215,6 +252,29 @@ with gr.Blocks() as demo:
             image_output1, audio_output1,
             image_output2, audio_output2
         ]
+    )
+    ##document upload section
+    with gr.Tab("Document Upload & Specific Lyrics"):
+        upload_prompt = gr.Markdown("### Upload a Document to Enhance Lyrics Generation")
+        document_upload = gr.File(label="Upload Document", file_types=[".txt", ".md"])
+        upload_btn = gr.Button("Upload Document")
+        upload_output = gr.Textbox(label="Upload Status", interactive=False)  
+        
+        upload_btn.click(
+            fn=upload_document,
+            inputs=document_upload,
+            outputs=upload_output
+        )
+    
+    gr.Markdown("### Generate More Specific Lyrics Using the Uploaded Document")
+    specific_lyrics_input = gr.Textbox(label="Enter your thoughts here:", lines=5, placeholder="Provide specific ideas or themes for the lyrics...")
+    generate_specific_lyrics_btn = gr.Button("Generate Specific Lyrics")
+    specific_lyrics_output = gr.Textbox(label="Generated Lyrics:", lines=10, interactive=True)
+    
+    generate_specific_lyrics_btn.click(
+        fn=generate_specific_lyrics,
+        inputs=[instruments, language_select, specific_lyrics_input],
+        outputs=specific_lyrics_output
     )
 
 demo.launch()
