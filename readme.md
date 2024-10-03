@@ -15,35 +15,33 @@ With this generator, you can turn your musical inspiration into reality, even wi
 
 ## How to run
 
+### Register a Suno account
 First, you need a Suno account. Register at [Suno](https://suno.ai/).
 
-
-Create virtual environment (recommend) and install dependencies:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-Create `.env` file and add the following environment variables:
-
-```bash
-OPENAI_API_KEY=<your_openai_api_key>
-```
-
+### Start the Suno API server
 
 You need to start the Suno API server, please refer to the [Suno API](https://github.com/gcui-art/suno-api)
 
-Start the Song Generator:
+**Note**: If you are using the Langfuse server mentioned below, as it occupies port 3000, 
+you need to specify a different port for the Suno API server, for example: `http://localhost:4000`
 
-```bash
-python app.py
+I recommend using docker to run the Suno API server.
+Before running the docker, you need to change the `docker-compose.yml` file to specify the correct `SUNO_API_HOST` in the `.env` file.
+
+For example, change the `docker-compose.yml` file to:
+
+```yaml
+    ports:
+      - "4000:3000"
 ```
 
-The web app will run on http://localhost:7860
+Then, run the docker compose: 
 
-## Langfuse
+```bash
+docker compose build && docker compose up -d
+```
+
+### Langfuse
 
 [Langfuse](https://www.langfuse.com/) is an open-source LLM engineering platform that helps teams collaboratively debug, analyze, and iterate on their LLM applications.
 
@@ -60,3 +58,28 @@ LANGFUSE_HOST="http://localhost:3000"
 ```
 
 Then, you can view the tracing data at http://localhost:3000/
+
+### Run the Song Generator
+
+Create `.env` file and add the following environment variables:
+
+```bash
+OPENAI_API_KEY=<your_openai_api_key>
+SUNO_API_HOST=<your_suno_api_host>
+```
+
+Create virtual environment (recommend) and install dependencies:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Start the Song Generator:
+
+```bash
+python app.py
+```
+
+The web app will run on http://localhost:7860
