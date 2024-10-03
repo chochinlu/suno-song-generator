@@ -3,6 +3,8 @@ import gradio as gr
 from pytubefix import YouTube
 from pytubefix.cli import on_progress
 import whisper
+from youtube_transcript_api import YouTubeTranscriptApi
+from pytube import extract
 import os
 # from openai import OpenAI
 from langfuse.openai import OpenAI
@@ -17,31 +19,44 @@ client = OpenAI()
 @observe()
 def get_lyrics(youtube_link):
     try:
-        # Download YouTube audio with true= po to  avoid bot detection
-        yt = YouTube(youtube_link, use_po_token=True, on_progress_callback=on_progress)
+        video_id = extract.video_id(youtube_link)
         print(f"Processing YouTube link: {youtube_link}")
-        audio = yt.streams.get_audio_only()
-        audio.download(filename="temp", mp3=True)
 
-        # Transcribe audio using Whisper
-        model = whisper.load_model("turbo")
-        result = model.transcribe("temp.mp3")
+        # Try to get the transcript (subtitles) in English
+        try:
+            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+            transcript = transcript_list.find_transcript(['en'])
+            transcript_data = transcript.fetch()
+            lyrics = ' '.join([entry['text'] for entry in transcript_data])
+            return lyrics if lyrics else "No lyrics found."
         
-        # Save transcription result to file
-        with open("lyrics.txt", "w", encoding="utf-8") as f:
-            f.write(result["text"])
-        
-        # Read and return lyrics
-        with open("lyrics.txt", "r", encoding="utf-8") as f:
-            lyrics = f.read()
-        
-        # Delete temporary audio file
-        os.remove("temp.mp3")
-        
-        return lyrics if lyrics else "No lyrics found."
+        except Exception as e:
+            print(f"No subtitles found or error in fetching subtitles: {str(e)}")
+            print("Proceeding to download audio and transcribe using Whisper.")
+
+            # Download YouTube audio
+            yt = YouTube(youtube_link, on_progress_callback=on_progress)
+            audio = yt.streams.get_audio_only()
+            audio.download(filename="temp", mp3=True)
+
+            # Transcribe audio using Whisper
+            model = whisper.load_model("base")
+            result = model.transcribe("temp.mp3")
+
+            # Save transcription result to file
+            with open("lyrics.txt", "w", encoding="utf-8") as f:
+                f.write(result["text"])
+
+            # Read and return lyrics
+            with open("lyrics.txt", "r", encoding="utf-8") as f:
+                lyrics = f.read()
+
+            # Delete temporary audio file
+            os.remove("temp.mp3")
+
+            return lyrics if lyrics else "No lyrics found."
     except Exception as e:
         return f"An error occurred: {str(e)}"
-
 @observe()
 def analyze_song(lyrics):
     response = client.chat.completions.create(
