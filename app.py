@@ -9,6 +9,7 @@ from langfuse.openai import OpenAI
 from langfuse.decorators import observe
 import json
 import requests
+from requests.exceptions import Timeout, RequestException
 from prompts import LYRICS_ANALYSIS_PROMPT, TITLE_GENERATION_PROMPT, LYRICS_GENERATION_PROMPT
 
 load_dotenv()
@@ -106,8 +107,10 @@ def generate_song(generated_lyrics, style_input, title_input):
         "wait_audio": True
     }
     
+    timeout = 600  # 10 minutes
+
     try:
-        response = requests.post(url, json=payload)
+        response = requests.post(url, json=payload, timeout=timeout)
         response.raise_for_status()
         result = response.json()
         
@@ -119,9 +122,14 @@ def generate_song(generated_lyrics, style_input, title_input):
             outputs.extend([None, None])
         
         return *outputs, gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=False)
-    except requests.RequestException as e:
+    except Timeout:
+        error_message = f"Request timed out after {timeout} seconds. Please try again later."
+    except RequestException as e:
         error_message = f"Error generating song: {str(e)}"
-        return None, None, None, None, gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=True, value=error_message)
+    except Exception as e:
+        error_message = f"Unexpected error: {str(e)}"
+    
+    return None, None, None, None, gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=True, value=error_message)
 
 @observe()
 def update_style_input(song_style):
