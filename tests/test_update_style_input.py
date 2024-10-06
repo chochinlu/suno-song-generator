@@ -21,7 +21,6 @@ class TestUpdateStyleInput(unittest.TestCase):
         all_categories = set(music_categories['Styles'] + music_categories['Genres'] + music_categories['Types'])
         self.assertTrue(any(category.lower() in result.lower() for category in all_categories))
 
-        # Print result for manual inspection
         print(f"Generated style: {result}")
 
     def test_update_style_input_empty_thought(self):

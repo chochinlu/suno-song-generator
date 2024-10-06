@@ -1,4 +1,5 @@
 from music_categories import music_categories
+from lyrics_annotations import bark_tags, chirp_tags
 
 LYRICS_ANALYSIS_PROMPT = """
 You are a lyrics analysis expert. After analyzing the lyrics, provide:
@@ -60,18 +61,34 @@ The returned format should only be a comma-separated list, for example: Jazz, Da
 Output only the generated style list without any additional explanation.
 """
 
-LYRICS_GENERATION_PROMPT = """
+BARK_TAGS = ', '.join(bark_tags.keys())
+CHIRP_TAGS = ', '.join(chirp_tags.keys())
+
+LYRICS_GENERATION_PROMPT = f"""
 Based on the following information, generate song lyrics:
 
-Instruments and arrangement: {instruments}
-Language: {language}
-Songwriter's thought: {thought}
+Instruments and arrangement: {{instruments}}
+Language: {{language}}
+Songwriter's thought: {{thought}}
 
 Requirements:
 1. The lyrics should rhyme as much as possible, focusing on creating a melodic and rhythmic flow.
 2. Ensure the rhyme scheme is appropriate for the song style and language.
 3. Use internal rhymes and assonance to enhance the lyrical quality when applicable.
+4. Each paragraph should start with 0 to 3 annotations enclosed in square brackets.
+5. Annotations should be chosen from the following lists:
+6. The output should not be enclosed in any quotation marks or brackets at the beginning or end.
 
-Please provide only the generated lyrics in the specified language, without any additional explanation.
+Bark tags: {BARK_TAGS}
+Chirp tags: {CHIRP_TAGS}
+
+Example of annotation format:
+[Verse][woman]
+Lyrics for the verse...
+
+[Chorus][upbeat music][cheering]
+Lyrics for the chorus...
+
+Please provide only the generated lyrics in the specified language, with appropriate annotations at the beginning of each paragraph. Do not include any additional explanation.
 If the language is Chinese, use Traditional Chinese characters.
 """
