@@ -24,7 +24,24 @@ with gr.Blocks() as demo:
 
     analyze_btn.click(fn=analyze_song, inputs=lyrics_output, outputs=[song_style, instruments])
     
-    language_select = gr.Dropdown(choices=["Chinese", "English", "Japanese"], label="Select Language")
+    language_select = gr.Dropdown(
+        choices=[
+            "Chinese",
+            "English",
+            "Japanese",
+            "Spanish",
+            "French",
+            "German",
+            "Italian",
+            "Portuguese",
+            "Russian",
+            "Korean",
+            "Arabic",
+            "Hindi",
+            "Dutch"
+        ],
+        label="Select Language"
+    )
     
     with gr.Row():
         with gr.Column():
