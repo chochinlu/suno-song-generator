@@ -3,6 +3,7 @@
 __pycache__
 .env
 *.txt
+!tests/ly_1.txt
 !requirements.txt
 .venv
 *.ipynb
