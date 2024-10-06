@@ -9,8 +9,7 @@ from langfuse.openai import OpenAI
 import requests
 from requests.exceptions import Timeout, RequestException
 import gradio as gr
-from prompts import LYRICS_ANALYSIS_PROMPT, TITLE_GENERATION_PROMPT, LYRICS_GENERATION_PROMPT, SONG_STYLE_GENERATION_PROMPT, music_categories
-
+from prompts import TITLE_GENERATION_PROMPT, LYRICS_GENERATION_PROMPT, SONG_STYLE_GENERATION_PROMPT, LYRICS_ANALYSIS_SONG_STYLE_PROMPT, LYRICS_ANALYSIS_INSTRUMENTS_PROMPT, music_categories
 
 
 load_dotenv()
@@ -26,29 +25,34 @@ def get_lyrics(youtube_link):
         return f"An error occurred: {str(e)}"
 
 @observe()
-def analyze_song(lyrics):
+def analyze_song_style(lyrics):
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": LYRICS_ANALYSIS_PROMPT},
+            {"role": "system", "content": LYRICS_ANALYSIS_SONG_STYLE_PROMPT},
+            {"role": "user", "content": f"Analyze these lyrics:\n\n{lyrics}"}
+        ],
+        max_tokens=100
+    )
+    return response.choices[0].message.content.strip()
+
+@observe()
+def analyze_song_instruments(lyrics):
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": LYRICS_ANALYSIS_INSTRUMENTS_PROMPT},
             {"role": "user", "content": f"Analyze these lyrics:\n\n{lyrics}"}
         ],
         max_tokens=500
     )
+    return response.choices[0].message.content.strip()
 
-    analysis = response.choices[0].message.content
-    
-    # Parse JSON response
-    try:
-        analysis_json = json.loads(analysis)
-        song_style = analysis_json.get("songStyle", "Cannot analyze song style")
-        instruments = analysis_json.get("instruments", "Cannot analyze instrument arrangement")
-    except json.JSONDecodeError:
-        # If JSON parsing fails, use simple text splitting
-        parts = analysis.split("Song structure analysis:")
-        song_style = parts[0].replace("Song style:", "").strip()
-        instruments = parts[1].strip() if len(parts) > 1 else "Cannot analyze instrument arrangement"
 
+@observe()
+def analyze_song(lyrics):
+    song_style = analyze_song_style(lyrics)
+    instruments = analyze_song_instruments(lyrics)
     return song_style, instruments
 
 @observe()

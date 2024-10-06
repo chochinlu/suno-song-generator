@@ -5,6 +5,9 @@ from ai_generation_functions import (
     generate_song, update_style_input, generate_lyrics
 )
 
+def update_analyze_btn(lyrics):
+    return gr.update(interactive=bool(lyrics.strip()))
+
 with gr.Blocks() as demo:
     youtube_link = gr.Text(label="Enter YouTube Song Link:")
     get_lyrics_btn = gr.Button("Get Lyrics")
@@ -12,11 +15,13 @@ with gr.Blocks() as demo:
     
     get_lyrics_btn.click(fn=get_lyrics, inputs=youtube_link, outputs=lyrics_output)
     
-    analyze_btn = gr.Button("Analyze")
-    with gr.Row():
-        song_style = gr.Textbox(label="Song Style")
-        instruments = gr.Textbox(label="Instruments and Vocal Arrangement")
+    analyze_btn = gr.Button("Analyze Song", interactive=False)
+    lyrics_output.change(fn=update_analyze_btn, inputs=lyrics_output, outputs=analyze_btn)
     
+    with gr.Column():
+        song_style = gr.Textbox(label="Song Style", interactive=False)
+        instruments = gr.Textbox(label="Instruments and Vocal Arrangement", interactive=False)
+
     analyze_btn.click(fn=analyze_song, inputs=lyrics_output, outputs=[song_style, instruments])
     
     language_select = gr.Dropdown(choices=["Chinese", "English", "Japanese"], label="Select Language")
