@@ -5,11 +5,13 @@ from pytubefix.cli import on_progress
 import whisper
 import os
 import json
-from openai import OpenAI
+from langfuse.openai import OpenAI
 import requests
 from requests.exceptions import Timeout, RequestException
 import gradio as gr
-from prompts import LYRICS_ANALYSIS_PROMPT, TITLE_GENERATION_PROMPT, LYRICS_GENERATION_PROMPT
+from prompts import LYRICS_ANALYSIS_PROMPT, TITLE_GENERATION_PROMPT, LYRICS_GENERATION_PROMPT, SONG_STYLE_GENERATION_PROMPT, music_categories
+
+
 
 load_dotenv()
 client = OpenAI()
@@ -130,8 +132,24 @@ def generate_song(generated_lyrics, style_input, title_input):
     return None, None, None, None, gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=True, value=error_message)
 
 @observe()
-def update_style_input(song_style):
-    return song_style
+def update_style_input(song_style, thought=""):
+    prompt = SONG_STYLE_GENERATION_PROMPT.format(
+        style=song_style,
+        thought=thought,
+    )
+    
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You are a creative music style generator."},
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=60,
+        temperature=0.7
+    )
+    
+    generated_style = response.choices[0].message.content.strip()
+    return generated_style
 
 @observe()
 def generate_lyrics(instruments, language, thought):
