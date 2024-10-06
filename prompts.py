@@ -20,17 +20,16 @@ Example output:
 """
 
 TITLE_GENERATION_PROMPT = """
-Based on the following information, generate a catchy and appropriate title for a song:
+Based on the following lyrics and style, generate a song title in {language}.
 
 Original title: {title}
 Lyrics: {lyrics}[:200]...
-Style: {style}
-Language: {language}
-Songwriter's thought: {thought}
+Style:
+{style}
 
-Please provide only the generated title in the specified language, without any additional explanation.
-If the language is Chinese, use Traditional Chinese characters.
-Do not include any quotation marks or parentheses at the beginning or end of the title.
+Your Thought:
+{thought}
+Please provide only the generated title in the specified language, without any additional explanation. Do not include any quotation marks or parentheses at the beginning or end of the title.
 The generated title must clearly reflect the songwriter's thought, ensuring a strong connection between the two.
 """
 

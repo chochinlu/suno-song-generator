@@ -67,11 +67,15 @@ with gr.Blocks() as demo:
             
         with gr.Column():
             lyrics_input = gr.Textbox(label="Enter or edit lyrics here:", lines=10, placeholder="You can paste or edit lyrics here...",interactive=True)
+            uploaded_file = gr.File(
+                label="Upload Relevant Information", 
+                file_types=[".txt", ".pdf"]
+            )
             generate_lyrics_btn = gr.Button("Generate Song Lyric")
-            
+            # Update the click event to include `uploaded_file` as an input
             generate_lyrics_btn.click(
                 fn=generate_lyrics,
-                inputs=[instruments, language_select, your_thought_input],
+                inputs=[instruments, language_select, your_thought_input, uploaded_file],
                 outputs=lyrics_input
             )
     

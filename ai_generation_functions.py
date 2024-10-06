@@ -2,6 +2,9 @@ from dotenv import load_dotenv
 from langfuse.decorators import observe
 from pytubefix import YouTube
 from pytubefix.cli import on_progress
+
+from youtube_transcript_api import YouTubeTranscriptApi
+from pytube import extract
 import whisper
 import os
 import json
@@ -10,19 +13,49 @@ import requests
 from requests.exceptions import Timeout, RequestException
 import gradio as gr
 from prompts import TITLE_GENERATION_PROMPT, LYRICS_GENERATION_PROMPT, SONG_STYLE_GENERATION_PROMPT, LYRICS_ANALYSIS_SONG_STYLE_PROMPT, LYRICS_ANALYSIS_INSTRUMENTS_PROMPT, music_categories
-
+import tempfile
+import PyPDF2
 
 load_dotenv()
 client = OpenAI()
 
 @observe()
 def get_lyrics(youtube_link):
-    try:
-        with open('tests/ly_1.txt', 'r', encoding='utf-8') as f:
-            lyrics = f.read()
-        return lyrics if lyrics else "No lyrics found."
-    except Exception as e:
-        return f"An error occurred: {str(e)}"
+        video_id = extract.video_id(youtube_link)
+        # Try to get the transcript (subtitles) in English
+        try:
+            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+            transcript = transcript_list.find_transcript(['en'])
+            transcript_data = transcript.fetch()
+            lyrics = ' '.join([entry['text'] for entry in transcript_data])
+            return lyrics if lyrics else "No lyrics found."
+        except Exception as e:
+            print(f"No subtitles found or error in fetching subtitles: {str(e)}")
+            print("Proceeding to download audio and transcribe using Whisper.")
+
+            # Download YouTube audio
+            yt = YouTube(youtube_link, on_progress_callback=on_progress)
+            audio = yt.streams.get_audio_only()
+            audio.download(filename="temp", mp3=True)
+
+            # Transcribe audio using Whisper
+            model = whisper.load_model("base")
+            result = model.transcribe("temp.mp3")
+
+            # Save transcription result to file
+            with open("lyrics.txt", "w", encoding="utf-8") as f:
+                f.write(result["text"])
+
+            # Read and return lyrics
+            with open("lyrics.txt", "r", encoding="utf-8") as f:
+                lyrics = f.read()
+
+            # Delete temporary audio file
+            os.remove("temp.mp3")
+
+            return lyrics if lyrics else "No lyrics found."
+        except Exception as e:
+            return f"An error occurred: {str(e)}"
 
 @observe()
 def analyze_song_style(lyrics):
@@ -57,18 +90,25 @@ def analyze_song(lyrics):
 
 @observe()
 def generate_title(title, lyrics, style, language, thought):
-    prompt = TITLE_GENERATION_PROMPT.format(
-        title=title,
-        lyrics=lyrics,
-        style=style,
-        language=language,
-        thought=thought
-    )
-    
+    print(f"Language selected: {language}")
+    prompt = f"""
+Based on the following lyrics and style, generate a song title in {language}.
+
+Lyrics:
+{lyrics}
+
+Style:
+{style}
+
+Your Thought:
+{thought}
+"""
+    system_prompt = f"You are a creative songwriter specializing in crafting catchy song titles. Generate the song title in {language}."
+
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": "You are a creative songwriter specializing in crafting catchy song titles in multiple languages."},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt}
         ],
         max_tokens=30,
@@ -137,11 +177,16 @@ def update_style_input(song_style, thought=""):
     return generated_style
 
 @observe()
-def generate_lyrics(instruments, language, thought):
+def generate_lyrics(instruments, language, thought, uploaded_file):
+    # Read the content of the uploaded file
+    file_content = read_uploaded_file(uploaded_file)
+    
+    # Update the prompt to include the file content
     prompt = LYRICS_GENERATION_PROMPT.format(
         instruments=instruments,
         language=language,
-        thought=thought
+        thought=thought,
+        file_content=file_content
     )
     
     response = client.chat.completions.create(
@@ -155,3 +200,31 @@ def generate_lyrics(instruments, language, thought):
     
     generated_lyrics = response.choices[0].message.content.strip()
     return generated_lyrics
+
+def read_uploaded_file(uploaded_file):
+    if uploaded_file is None:
+        return ""
+    try:
+        if uploaded_file.name.endswith('.txt'):
+            with open(uploaded_file.name, 'r', encoding='utf-8') as f:
+                content = f.read()
+        elif uploaded_file.name.endswith('.pdf'):
+            content = extract_text_from_pdf(uploaded_file)
+        else:
+            content = ""
+        return content
+    except Exception as e:
+        print(f"Error reading uploaded file: {e}")
+        return ""
+
+def extract_text_from_pdf(uploaded_file):
+    content = ""
+    try:
+        with open(uploaded_file.name, 'rb') as f:
+            reader = PyPDF2.PdfReader(f)
+            for page in reader.pages:
+                content += page.extract_text()
+        return content
+    except Exception as e:
+        print(f"Error extracting text from PDF: {e}")
+        return ""
