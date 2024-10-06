@@ -1,10 +1,9 @@
 from dotenv import load_dotenv
 from langfuse.decorators import observe
-from pytubefix import YouTube
+from pytubefix import YouTube, extract
 from pytubefix.cli import on_progress
 
 from youtube_transcript_api import YouTubeTranscriptApi
-from pytube import extract
 import whisper
 import os
 import json
