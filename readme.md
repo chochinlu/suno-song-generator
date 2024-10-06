@@ -84,3 +84,13 @@ python app.py
 ```
 
 The web app will run on http://localhost:7860
+
+## Screenshot
+
+![image1](./doc/images/1.png)
+
+![image2](./doc/images/2.png)
+
+![image3](./doc/images/3.png)
+
+
