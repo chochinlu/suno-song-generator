@@ -18,43 +18,33 @@ import PyPDF2
 load_dotenv()
 client = OpenAI()
 
+
 @observe()
 def get_lyrics(youtube_link):
-        video_id = extract.video_id(youtube_link)
-        # Try to get the transcript (subtitles) in English
-        try:
-            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
-            transcript = transcript_list.find_transcript(['en'])
-            transcript_data = transcript.fetch()
-            lyrics = ' '.join([entry['text'] for entry in transcript_data])
-            return lyrics if lyrics else "No lyrics found."
-        except Exception as e:
-            print(f"No subtitles found or error in fetching subtitles: {str(e)}")
-            print("Proceeding to download audio and transcribe using Whisper.")
+    try:
+        # Download YouTube audio
+        yt = YouTube(youtube_link, on_progress_callback=on_progress)
+        audio_stream = yt.streams.filter(only_audio=True).first()
+        temp_audio_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+        audio_stream.download(
+            output_path=os.path.dirname(temp_audio_file.name),
+            filename=os.path.basename(temp_audio_file.name)
+        )
 
-            # Download YouTube audio
-            yt = YouTube(youtube_link, on_progress_callback=on_progress)
-            audio = yt.streams.get_audio_only()
-            audio.download(filename="temp", mp3=True)
+        # Transcribe audio using Whisper
+        model = whisper.load_model("base")
+        result = model.transcribe(temp_audio_file.name)
 
-            # Transcribe audio using Whisper
-            model = whisper.load_model("base")
-            result = model.transcribe("temp.mp3")
+        # Get the transcription text directly from the result
+        lyrics = result["text"]
 
-            # Save transcription result to file
-            with open("lyrics.txt", "w", encoding="utf-8") as f:
-                f.write(result["text"])
+        # Clean up the temporary audio file
+        temp_audio_file.close()
+        os.remove(temp_audio_file.name)
 
-            # Read and return lyrics
-            with open("lyrics.txt", "r", encoding="utf-8") as f:
-                lyrics = f.read()
-
-            # Delete temporary audio file
-            os.remove("temp.mp3")
-
-            return lyrics if lyrics else "No lyrics found."
-        except Exception as e:
-            return f"An error occurred: {str(e)}"
+        return lyrics if lyrics else "No lyrics found."
+    except Exception as e:
+        return f"An error occurred: {str(e)}"
 
 @observe()
 def analyze_song_style(lyrics):
