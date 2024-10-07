@@ -26,7 +26,8 @@ with gr.Blocks() as demo:
     
     language_select = gr.Dropdown(
         choices=[
-            "Chinese",
+            "Simplified Chinese",
+            "Traditional Chinese",
             "English",
             "Japanese",
             "Spanish",

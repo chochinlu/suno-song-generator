@@ -80,24 +80,17 @@ def analyze_song(lyrics):
 @observe()
 def generate_title(title, lyrics, style, language, thought):
     print(f"Language selected: {language}")
-    prompt = f"""
-Based on the following lyrics and style, generate a song title in {language}.
-
-Lyrics:
-{lyrics}
-
-Style:
-{style}
-
-Your Thought:
-{thought}
-"""
-    system_prompt = f"You are a creative songwriter specializing in crafting catchy song titles. Generate the song title in {language}."
+    prompt = TITLE_GENERATION_PROMPT.format(
+        title=title,
+        lyrics=lyrics[:200],
+        style=style,
+        language=language,
+        thought=thought
+    )
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt}
         ],
         max_tokens=30,
@@ -105,7 +98,6 @@ Your Thought:
     )
     
     generated_title = response.choices[0].message.content.strip()
-    # Remove possible quotation marks and parentheses at the beginning or end of the title
     generated_title = generated_title.strip('"\'()[]{}')
     
     return generated_title
