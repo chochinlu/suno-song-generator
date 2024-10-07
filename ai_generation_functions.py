@@ -6,13 +6,11 @@ from pytubefix.cli import on_progress
 from youtube_transcript_api import YouTubeTranscriptApi
 import whisper
 import os
-import json
 from langfuse.openai import OpenAI
 import requests
 from requests.exceptions import Timeout, RequestException
 import gradio as gr
 from prompts import TITLE_GENERATION_PROMPT, LYRICS_GENERATION_PROMPT, SONG_STYLE_GENERATION_PROMPT, LYRICS_ANALYSIS_SONG_STYLE_PROMPT, LYRICS_ANALYSIS_INSTRUMENTS_PROMPT, music_categories
-import tempfile
 import PyPDF2
 
 load_dotenv()
@@ -22,27 +20,43 @@ client = OpenAI()
 @observe()
 def get_lyrics(youtube_link):
     try:
-        # Download YouTube audio
-        yt = YouTube(youtube_link, on_progress_callback=on_progress)
-        audio_stream = yt.streams.filter(only_audio=True).first()
-        temp_audio_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
-        audio_stream.download(
-            output_path=os.path.dirname(temp_audio_file.name),
-            filename=os.path.basename(temp_audio_file.name)
-        )
+        # Extract video ID from the YouTube link
+        video_id = extract.video_id(youtube_link)
 
-        # Transcribe audio using Whisper
-        model = whisper.load_model("base")
-        result = model.transcribe(temp_audio_file.name)
+        try:
+            # Attempt to fetch English subtitles
+            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+            transcript = transcript_list.find_transcript(['en'])
+            transcript_data = transcript.fetch()
+            lyrics = ' '.join([entry['text'] for entry in transcript_data])
 
-        # Get the transcription text directly from the result
-        lyrics = result["text"]
+            if lyrics:
+                return lyrics
+            else:
+                raise Exception("Subtitles found but no lyrics extracted.")
 
-        # Clean up the temporary audio file
-        temp_audio_file.close()
-        os.remove(temp_audio_file.name)
+        except Exception as subtitle_error:
+            print(f"Subtitle error: {str(subtitle_error)}")
+            print("Proceeding to download audio and transcribe using Whisper.")
 
-        return lyrics if lyrics else "No lyrics found."
+            # Download YouTube audio
+            yt = YouTube(youtube_link, on_progress_callback=on_progress)
+            audio_stream = yt.streams.filter(only_audio=True).first()
+            audio_file = audio_stream.download(filename="temp_audio")
+
+            # Transcribe audio using Whisper
+            model = whisper.load_model("base")
+            result = model.transcribe(audio_file)
+            lyrics = result.get("text", "")
+
+            # Clean up temporary audio file
+            os.remove(audio_file)
+
+            if lyrics:
+                return lyrics
+            else:
+                return "No lyrics found after transcription."
+
     except Exception as e:
         return f"An error occurred: {str(e)}"
 
