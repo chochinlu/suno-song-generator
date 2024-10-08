@@ -18,29 +18,6 @@ With this generator, you can turn your musical inspiration into reality, even wi
 ### Register a Suno account
 First, you need a Suno account. Register at [Suno](https://suno.ai/).
 
-### Start the Suno API server
-
-You need to start the Suno API server, please refer to the [Suno API](https://github.com/gcui-art/suno-api)
-
-**Note**: If you are using the Langfuse server mentioned below, as it occupies port 3000, 
-you need to specify a different port for the Suno API server, for example: `http://localhost:4000`
-
-I recommend using docker to run the Suno API server.
-Before running the docker, you need to change the `docker-compose.yml` file to specify the correct `SUNO_API_HOST` in the `.env` file.
-
-For example, change the `docker-compose.yml` file to:
-
-```yaml
-    ports:
-      - "4000:3000"
-```
-
-Then, run the docker compose: 
-
-```bash
-docker compose build && docker compose up -d
-```
-
 ### Langfuse
 
 [Langfuse](https://www.langfuse.com/) is an open-source LLM engineering platform that helps teams collaboratively debug, analyze, and iterate on their LLM applications.
@@ -51,6 +28,40 @@ You can use the self-hosted LangFuse to observe the tracing data. Flow [this rep
 
 
 Then, you can view the tracing data at http://localhost:3000/
+
+### Start the Suno API server
+
+You need to start the Suno API server, please refer to the [Suno API documentation](https://github.com/gcui-art/suno-api)
+
+**Note**: You need to create a `.env` file at the root of the Suno API server and add the following environment variables:
+
+```bash
+SUNO_COOKIE=<your_suno_cookie>
+```
+
+[How to obtain the cookie of your Suno account](https://github.com/gcui-art/suno-api?tab=readme-ov-file#1-obtain-the-cookie-of-your-appsunoai-account)
+
+
+**Note**: If you are using the Langfuse server mentioned below, as it occupies port 3000, 
+you need to specify a different port for the Suno API server, for example: `http://localhost:4000`
+
+I recommend using docker to run the Suno API server.
+Before running the docker, you need to change the `docker-compose.yml` file to specify a different port from the one used by the Langfuse server.
+
+For example, change the `docker-compose.yml` file to:
+
+```yaml
+    ports:
+      - "4000:3000"
+```
+
+
+Then, run the docker compose: 
+
+```bash
+docker compose build && docker compose up -d
+```
+
 
 ### Run the Song Generator
 
