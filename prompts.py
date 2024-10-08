@@ -29,7 +29,8 @@ Language: {language}
 Songwriter's thought: {thought}
 
 Please provide only the generated title in the specified language, without any additional explanation.
-If the language is Chinese, use Traditional Chinese characters.
+If the language is Traditional Chinese, use Traditional Chinese characters.
+If the language is Simplified Chinese, use Simplified Chinese characters.
 Do not include any quotation marks or parentheses at the beginning or end of the title.
 The generated title must clearly reflect the songwriter's thought, ensuring a strong connection between the two.
 """
@@ -86,5 +87,6 @@ Lyrics for the verse...
 Lyrics for the chorus...
 
 Please provide only the generated lyrics in the specified language, with appropriate annotations at the beginning of each paragraph. Do not include any additional explanation.
-If the language is Chinese, use Traditional Chinese characters.
+If the language is Traditional Chinese, use Traditional Chinese characters.
+If the language is Simplified Chinese, use Simplified Chinese characters.
 """
