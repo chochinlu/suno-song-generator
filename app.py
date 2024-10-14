@@ -120,6 +120,9 @@ with gr.Blocks() as demo:
             image_output2, audio_output2,
             processing_msg
         ]
+    ).then(
+        fn=update_credits_info,
+        outputs=[credits_info, generate_song_btn]
     )
 
     suno_link = gr.HTML('''
