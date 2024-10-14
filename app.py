@@ -1,9 +1,9 @@
 from dotenv import load_dotenv
 import gradio as gr
 from ai_generation_functions import (
-    get_lyrics, analyze_song, generate_title, 
-    generate_song, update_style_input, generate_lyrics
+    get_lyrics, analyze_song, generate_title, update_style_input, generate_lyrics
 )
+from suno_api_functions import generate_song
 
 def update_analyze_btn(lyrics):
     return gr.update(interactive=bool(lyrics.strip()))
