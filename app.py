@@ -3,7 +3,7 @@ import gradio as gr
 from ai_generation_functions import (
     get_lyrics, analyze_song, generate_title, update_style_input, generate_lyrics
 )
-from suno_api_functions import generate_song
+from suno_api_functions import generate_song, check_suno_credits
 
 def update_analyze_btn(lyrics):
     return gr.update(interactive=bool(lyrics.strip()))
@@ -74,8 +74,21 @@ with gr.Blocks() as demo:
                 inputs=[instruments, language_select, your_thought_input],
                 outputs=lyrics_input
             )
-    
+
+    credits_info = gr.Textbox(label="Suno Credits Info:", visible=True)
     generate_song_btn = gr.Button("Generate the Song at Suno")
+    
+    def update_credits_info():
+        credits_data = check_suno_credits()
+        info = f"""
+        Credit Left: {credits_data['credits_left']},  Day Limit: {credits_data['monthly_limit']},  Day Usage: {credits_data['monthly_usage']}
+        """
+        if credits_data['credits_left'] == 0:
+            info += "\nWarning: You have reached the daily credit limit."
+        return info, gr.update(interactive=credits_data['credits_left'] > 0)
+
+    # Load the credits info when the app starts
+    demo.load(fn=update_credits_info, outputs=[credits_info, generate_song_btn])
     
     with gr.Row() as output_row:
         with gr.Column():

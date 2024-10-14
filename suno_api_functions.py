@@ -7,6 +7,16 @@ from langfuse.decorators import observe
 
 load_dotenv()
 
+def check_suno_credits():
+    try:
+        response = requests.get(f"{os.getenv('SUNO_API_HOST')}/api/get_limit")
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        return False
+
+
+
 @observe()
 def generate_song(generated_lyrics, style_input, title_input):
     url = f"{os.getenv('SUNO_API_HOST')}/api/custom_generate"
