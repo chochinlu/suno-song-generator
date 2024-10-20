@@ -15,17 +15,14 @@ def check_suno_credits():
     except Exception as e:
         return False
 
-
-
-@observe()
-def generate_song(generated_lyrics, style_input, title_input):
+def generate_song(your_thought_input, generated_lyrics, style_input, title_input, instrumental_only=False):
     url = f"{os.getenv('SUNO_API_HOST')}/api/custom_generate"
     payload = {
-        "prompt": generated_lyrics,
+        "prompt": generated_lyrics if not instrumental_only else your_thought_input,
         "title": title_input,
         "tags": style_input,
-        "make_instrumental": False,
-        # "wait_audio": True
+        "make_instrumental": instrumental_only,
+        "wait_audio": True,
     }
     
     timeout = 600  # 10 minutes
@@ -33,6 +30,7 @@ def generate_song(generated_lyrics, style_input, title_input):
         response = requests.post(url, json=payload, timeout=timeout)
         response.raise_for_status()
         result = response.json()
+        print("result: ", result)
         
         outputs = []
         for song in result[:2]:

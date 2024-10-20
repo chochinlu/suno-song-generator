@@ -5,10 +5,22 @@ from ai_generation_functions import (
 )
 from suno_api_functions import generate_song, check_suno_credits
 
+css = """
+.text-center {
+    text-align: center;
+}
+.red-warning {
+    padding-left: 10px;
+    color: red;
+    font-weight: bold;
+}
+"""
+
 def update_analyze_btn(lyrics):
     return gr.update(interactive=bool(lyrics.strip()))
 
-with gr.Blocks() as demo:
+with gr.Blocks(title="Suno Song Generator", css=css) as demo:
+    gr.Markdown("# Suno Song Generator", elem_classes="text-center")
     youtube_link = gr.Text(label="Enter YouTube Song Link:")
     get_lyrics_btn = gr.Button("Get Lyrics")
     lyrics_output = gr.Textbox(label="Lyrics:", lines=10, interactive=True, placeholder="You can paste or edit lyrics here...")
@@ -66,7 +78,7 @@ with gr.Blocks() as demo:
             )
             
         with gr.Column():
-            lyrics_input = gr.Textbox(label="Enter or edit lyrics here:", lines=10, placeholder="You can paste or edit lyrics here...",interactive=True)
+            lyrics_input = gr.Textbox(label="Enter or edit lyrics here:", lines=10, placeholder="You can paste or edit lyrics here...", interactive=True)
             generate_lyrics_btn = gr.Button("Generate Song Lyric")
             
             generate_lyrics_btn.click(
@@ -74,17 +86,17 @@ with gr.Blocks() as demo:
                 inputs=[instruments, language_select, your_thought_input],
                 outputs=lyrics_input
             )
+            
+            instrumental_only = gr.Checkbox(label="Instrumental Only", value=False)
 
-    credits_info = gr.Textbox(label="Suno Credits Info:", visible=True)
+    credits_info = gr.Markdown(label="Suno Credits Info:", visible=True)
     generate_song_btn = gr.Button("Generate the Song at Suno")
     
     def update_credits_info():
         credits_data = check_suno_credits()
-        info = f"""
-        Credit Left: {credits_data['credits_left']},  Day Limit: {credits_data['monthly_limit']},  Day Usage: {credits_data['monthly_usage']}
-        """
+        info = f"""Suno Credit Left: {credits_data['credits_left']},  Day Limit: {credits_data['monthly_limit']},  Day Usage: {credits_data['monthly_usage']}"""
         if credits_data['credits_left'] == 0:
-            info += "\nWarning: You have reached the daily credit limit."
+            info += f"\n<span class='red-warning'>You have reached the daily credit limit.</span>"
         return info, gr.update(interactive=credits_data['credits_left'] > 0)
 
     # Load the credits info when the app starts
@@ -112,7 +124,7 @@ with gr.Blocks() as demo:
         outputs=processing_msg
     ).then(
         fn=generate_song,
-        inputs=[lyrics_input, style_input, title_input],
+        inputs=[your_thought_input, lyrics_input, style_input, title_input, instrumental_only],
         outputs=[
             image_output1, audio_output1,
             image_output2, audio_output2,
