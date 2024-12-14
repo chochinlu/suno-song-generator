@@ -17,10 +17,26 @@ client = OpenAI()
 @observe()
 def get_lyrics(youtube_link):
     try:
-        with open('tests/ly_1.txt', 'r', encoding='utf-8') as f:
-            lyrics = f.read()
-        return lyrics if lyrics else "No lyrics found."
+        # Set temporary file name
+        temp_audio = "temp_audio.mp3"
+        
+        yt = YouTube(youtube_link, on_progress_callback=on_progress)
+        print(f"Downloading audio from {yt.title}")
+        
+        audio_stream = yt.streams.get_audio_only()
+        audio_stream.download(filename=temp_audio)
+        
+        model = whisper.load_model("large")
+        result = model.transcribe(temp_audio)
+        
+        if os.path.exists(temp_audio):
+            os.remove(temp_audio)
+            
+        return result["text"] if result["text"] else "No lyrics found."
+        
     except Exception as e:
+        if os.path.exists("temp_audio.mp3"):
+            os.remove("temp_audio.mp3")
         return f"An error occurred: {str(e)}"
 
 @observe()
